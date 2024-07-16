@@ -3,7 +3,6 @@
 #include <SDL2/SDL.h>
 #include <vector>
 #include <ctime>
-#include <unordered_set>
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
@@ -118,7 +117,7 @@ void update(float dT){
 	}
 
 	// Collisions for the Cubes
-	for (size_t i = 0; i < cubes.size(); ++i){
+	for (std::size_t i = 0; i < cubes.size(); ++i){
 		Rect& cube = cubes[i];
 		if(checkColission(ball.rect, cube.rect)){
 			ball.vy *= -1;
@@ -178,14 +177,14 @@ int main(int argc, char* args[]) {
 		// update
 		update(dT);
 
-        // render		
+        // render
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
 
 		renderRect(renderer, player);
 		renderRect(renderer, ball);
 
-		for (size_t i = 0; i < cubes.size(); ++i){
+		for (std::size_t i = 0; i < cubes.size(); ++i){
 			Rect& cube = cubes[i];
 			renderRect(renderer, cube);
 		}
