@@ -1,23 +1,16 @@
 #include <string>
 #include <print>
 #include <SDL2/SDL.h>
+#include <vector>
+#include <ctime>
+#include <unordered_set>
 
 const int SCREEN_WIDTH = 640;
 const int SCREEN_HEIGHT = 480;
 const int MAX_FPS = 60;
-const int BALL_SPEED = 100;
+const int BALL_SPEED = 200;
+const int CUBE_SPEED = 500;
 const int BALL_SIZE = 100;
-
-//struct Ball {
-//	int x, y, w, h;
-//};
-
-//Ball player1 = {1, 2, 3, 4};
-//Ball player1;
-//player1.x = 1;
-//player1.x = 2;
-//player1.x = 3;
-//player1.x = 4;
 
 struct Rect {
 	SDL_Rect rect = {0, 0, 100, 100};
@@ -28,9 +21,25 @@ struct Rect {
 
 SDL_Color red = {0xFF, 0x00, 0x00, 0xFF};
 SDL_Color blue = {0x00, 0x00, 0xFF, 0xFF};
+SDL_Color white = {0xFF, 0xFF, 0xFF, 0xFF};
 
-Rect ball1 = {{0, 0, 100, 100}, 0, 0, red};
-Rect ball2 = {{SCREEN_WIDTH - BALL_SIZE, 0, 100, 100}, -BALL_SPEED, BALL_SPEED, blue};
+Rect player = {{(SCREEN_WIDTH - BALL_SIZE) / 2, (SCREEN_HEIGHT - BALL_SIZE + 350) / 2, 150, 25}, 0, 0, red};
+Rect ball = {{(SCREEN_WIDTH - BALL_SIZE) / 2, (SCREEN_HEIGHT - BALL_SIZE) / 2, 30, 30}, -BALL_SPEED, BALL_SPEED, white};
+
+std::vector<Rect> cubes;
+
+SDL_Color getRandomColor() {
+    // Seed the random number generator with the current time
+    std::srand(std::time(nullptr));
+
+    Uint8 red = std::rand() % 256;
+    Uint8 green = std::rand() % 256;
+    Uint8 blue = std::rand() % 256;
+
+    SDL_Color color = {red, green, blue, 0xFF};
+
+    return color;
+}
 
 void renderRect(SDL_Renderer* renderer, Rect& ball){
 	SDL_SetRenderDrawColor(renderer, ball.color.r, ball.color.g, ball.color.b, ball.color.a);
@@ -50,62 +59,78 @@ void handleInput(SDL_Event&e){
 	// resolve
 	const Uint8* ks = SDL_GetKeyboardState(NULL);
 
-	ball1.vx = 0;
-	ball1.vy = 0;
-
-	if(ks[SDL_SCANCODE_W]){
-		//ball1.vy = -BALL_SPEED;
-		ball1.vy = -BALL_SPEED;
-	}
+	player.vx = 0;
+	player.vy = 0;
+	
 	if(ks[SDL_SCANCODE_A]){
-		ball1.vx = -BALL_SPEED;
-		//ball1.vy = BALL_SPEED;
+		player.vx = -CUBE_SPEED;
 	}
-	if(ks[SDL_SCANCODE_S]){
-		//ball1.vx = BALL_SPEED;
-		ball1.vy = BALL_SPEED;
-	}
+
 	if(ks[SDL_SCANCODE_D]){
-		//ball1.vx = -BALL_SPEED;
-		ball1.vx = BALL_SPEED;
+		player.vx = CUBE_SPEED;
 	}
 };
 
+void initComponents(){
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE - 500) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE - 300) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE - 100) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE + 100) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE + 300) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+	cubes.push_back({{(SCREEN_WIDTH - BALL_SIZE + 500) / 2, 0, 75, 75}, 0, 0, getRandomColor()});
+}
+
 void update(float dT){
-	if (ball1.rect.x < 0) {
-		ball1.vx *= -1;
-	}
-	if (ball2.rect.x < 0) {
-		ball2.vx *= -1;
-	}
-	if (ball1.rect.y < 0) {
-		ball1.vy *= -1;
-	}
-	if (ball2.rect.y < 0) {
-		ball2.vy *= -1;
-	}
-	if (ball1.rect.x + ball1.rect.w > SCREEN_WIDTH) {
-		ball1.vx *= -1;
-	}
-	if (ball2.rect.x + ball2.rect.w > SCREEN_WIDTH) {
-		ball2.vx *= -1;
-	}
-	if (ball1.rect.y + ball1.rect.h > SCREEN_HEIGHT) {
-		ball1.vy *= -1;
-	}
-	if (ball2.rect.y + ball2.rect.h > SCREEN_HEIGHT) {
-		ball2.vy *= -1;
+	if (player.rect.x < 0) {
+		player.vx *= -1; // ! CHECK THIS
 	}
 
-	if(checkColission(ball1.rect, ball2.rect)){
-		std::swap(ball1.vx, ball2.vx);
-		std::swap(ball1.vy, ball2.vy);
+	if (ball.rect.x < 0) {
+		ball.vx *= -1;
+	}
+
+	if (player.rect.y < 0) {
+		player.vy *= -1;
+	}
+
+	if (ball.rect.y < 0) {
+		ball.vy *= -1;
+	}
+
+	if (player.rect.x + player.rect.w > SCREEN_WIDTH) {
+		player.vx *= -1; // ! CHECK THIS
+	}
+
+	if (ball.rect.x + ball.rect.w > SCREEN_WIDTH) {
+		ball.vx *= -1;
+	}
+
+	if (player.rect.y + player.rect.h > SCREEN_HEIGHT) {
+		player.vy *= -1;
+	}
+
+	if (ball.rect.y + ball.rect.h > SCREEN_HEIGHT) {
+		ball.vy *= -1;
+	}
+
+	if(checkColission(player.rect, ball.rect)){
+		ball.vy *= -1;
+	}
+
+	// Collisions for the Cubes
+	for (size_t i = 0; i < cubes.size(); ++i){
+		Rect& cube = cubes[i];
+		if(checkColission(ball.rect, cube.rect)){
+			ball.vy *= -1;
+			cubes.erase(cubes.begin() + i);
+			--i;
+		}
 	}
 	
-	ball1.rect.x += ball1.vx * dT;
-	ball1.rect.y += ball1.vy * dT;
-	ball2.rect.x += ball2.vx * dT;
-	ball2.rect.y += ball2.vy * dT;	
+	player.rect.x += player.vx * dT;
+	player.rect.y += player.vy * dT;
+	ball.rect.x += ball.vx * dT;
+	ball.rect.y += ball.vy * dT;	
 }
 
 int main(int argc, char* args[]) {
@@ -131,6 +156,9 @@ int main(int argc, char* args[]) {
 	float actualFrameDuration;
 	int FPS = MAX_FPS;
 
+	// Start Components
+	initComponents();
+
     while (!quit) {
 		frameStartTimestamp = SDL_GetTicks(); // Cuantos ticks del pc a pasado despues de sdls
 		
@@ -154,8 +182,13 @@ int main(int argc, char* args[]) {
         SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xFF);
         SDL_RenderClear(renderer);
 
-		renderRect(renderer, ball1);
-		renderRect(renderer, ball2);
+		renderRect(renderer, player);
+		renderRect(renderer, ball);
+
+		for (size_t i = 0; i < cubes.size(); ++i){
+			Rect& cube = cubes[i];
+			renderRect(renderer, cube);
+		}
 
         SDL_RenderPresent(renderer);
 
@@ -179,6 +212,8 @@ int main(int argc, char* args[]) {
 		SDL_SetWindowTitle(window, std::to_string(FPS).c_str());
     }
 
+	cubes.clear();
+	
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
