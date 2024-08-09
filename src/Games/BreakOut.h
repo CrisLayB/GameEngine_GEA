@@ -13,9 +13,14 @@ struct SpriteComponent {
 	SDL_Color color;
 };
 
-struct PlayerComponent {};
+struct PlayerComponent {
+	short score = 0;
+	short maxScore = 0;
+};
 struct BallComponent {};
-struct BlockComponent {};
+struct BlockComponent {
+	bool isDestroyed = false;
+};
 
 class PlayerSpawnSetupSystem : public SetupSystem {
 	void run(){
@@ -65,6 +70,8 @@ class BlocksSpawnSetupSystem : public SetupSystem {
 		int numberOfCubes = 10;
 		int spacing = (640 - cubeWidth * numberOfCubes) / (numberOfCubes + 1);
 		
+		short blocksSpawned = 0;
+
 		for(int i = 0; i < 2; ++i){
 			int yPos = i * cubeHeight;
 			
@@ -82,8 +89,14 @@ class BlocksSpawnSetupSystem : public SetupSystem {
 				
 				block -> addComponent<SpriteComponent>(cubeWidth, cubeHeight, randomColor);
 				block -> addComponent<BlockComponent>();
+				blocksSpawned++;
 			}		
 		}
+
+		auto playerView = scene -> r.view<PlayerComponent>();
+		auto player = playerView.front();
+		auto& playerStruct = playerView.get<PlayerComponent>(player);
+		playerStruct.maxScore = blocksSpawned;
 	}
 };
 
@@ -118,7 +131,7 @@ class WallHitSystem : public UpdateSystem {
 			vel.x *= -1;
 		}
 
-		if (newPosY < 0 || newPosY + spr.height > 480) {
+		if (newPosY < 0) {
 			vel.y *= -1;
 		}	
 	}
@@ -142,8 +155,8 @@ class PlayerCollisionSystem : public UpdateSystem {
     void run(float dT) override {
         auto view = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>();
 
-        auto ballView = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>(entt::exclude<PlayerComponent>);
-        auto playerView = scene->r.view<PositionComponent, SpriteComponent, PlayerComponent>();		
+        auto ballView = scene->r.view<BallComponent, PositionComponent, VelocityComponent, SpriteComponent>();
+        auto playerView = scene->r.view<PlayerComponent, PositionComponent, SpriteComponent>();		
 
         for (auto ball : ballView) {
             auto& ballPos = ballView.get<PositionComponent>(ball);
@@ -173,8 +186,11 @@ class BlocksCollisionSystem : public UpdateSystem {
 	void run(float dT) override {
 		auto view = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>();
 
-		auto ballView = scene -> r.view<PositionComponent, VelocityComponent, SpriteComponent, BallComponent>(entt::exclude<PlayerComponent, BlockComponent>);
-		auto blocksView = scene -> r.view<PositionComponent, SpriteComponent, BlockComponent>();
+		auto ballView = scene -> r.view<BallComponent, PositionComponent, VelocityComponent, SpriteComponent>();
+		auto blocksView = scene -> r.view<BlockComponent, PositionComponent, SpriteComponent>();
+		auto playerView = scene -> r.view<PlayerComponent>();
+		auto player = playerView.front();
+		auto& playerStruct = playerView.get<PlayerComponent>(player);
 
 		for(auto ball : ballView){
 			auto& ballPos = ballView.get<PositionComponent>(ball);
@@ -184,6 +200,7 @@ class BlocksCollisionSystem : public UpdateSystem {
 			for(auto block : blocksView){
 				auto& blockPos = blocksView.get<PositionComponent>(block);
 				auto& blockSpr = blocksView.get<SpriteComponent>(block);
+				auto& blockStructure = blocksView.get<BlockComponent>(block);
 
 				bool collisionX = ballPos.x + ballSpr.width >= blockPos.x &&
                                   blockPos.x + ballSpr.width >= ballPos.x;
@@ -191,11 +208,48 @@ class BlocksCollisionSystem : public UpdateSystem {
                 bool collisionY = ballPos.y + ballSpr.height >= blockPos.y &&
                                   blockPos.y + ballSpr.height >= ballPos.y;
 
-				if(collisionX && collisionY){
-					ballVel.y = -ballVel.y;
+				if(collisionX && collisionY && !blockStructure.isDestroyed){
+					ballVel.y = (-ballVel.y * 1.05f);
 					ballPos.y = ballPos.y < blockPos.y ? blockPos.y - ballSpr.height : blockPos.y + blockSpr.height;
+					blockSpr.color = SDL_Color{0, 0, 0};
+					blockStructure.isDestroyed = true;
+					playerStruct.score++;
 				}
 			}
+		}
+	}
+};
+
+class VictoryConditionSystem : public UpdateSystem {
+	void run(float dT) override {
+		auto view = scene -> r.view<PositionComponent, VelocityComponent, SpriteComponent>();
+
+		auto playerView = scene -> r.view<PlayerComponent>();
+		auto player = playerView.front();
+		auto& playerStruct = playerView.get<PlayerComponent>(player);
+				
+		if(playerStruct.score != playerStruct.maxScore) return;
+
+		std::print("VICTORY!\n");
+		scene->onStop();
+	}
+};
+
+class LoseConditionSystem : public UpdateSystem {
+	void run(float dT) override {
+		auto view = scene->r.view<BallComponent, PositionComponent, VelocityComponent, SpriteComponent>();
+
+		auto ball = view.front();
+
+		auto pos = view.get<PositionComponent>(ball);
+		auto spr = view.get<SpriteComponent>(ball);
+		auto& vel = view.get<VelocityComponent>(ball);
+		
+		int newPosY = pos.y + vel.y * dT;
+
+		if(newPosY + spr.height > 480){
+			std::print("LOSE!\n");
+			scene->onStop();
 		}
 	}
 };
@@ -213,6 +267,8 @@ class BreakOut : public Game {
 		void setup(){
 			sampleScene = new Scene("BreakOut", r);
 
+			 sampleScene->onStop = [this]() { this->stop(); };
+
 			addSetupSystem<PlayerSpawnSetupSystem>(sampleScene);
 			addEventSystem<PlayerInput>(sampleScene);
 			addSetupSystem<BallSpawnSetupSystem>(sampleScene);
@@ -221,6 +277,8 @@ class BreakOut : public Game {
 			addUpdateSystem<WallHitSystem>(sampleScene);
 			addUpdateSystem<PlayerCollisionSystem>(sampleScene);
 			addUpdateSystem<BlocksCollisionSystem>(sampleScene);
+			addUpdateSystem<VictoryConditionSystem>(sampleScene);
+			addUpdateSystem<LoseConditionSystem>(sampleScene);
 			addRenderSystem<SquareRenderSystem>(sampleScene);
 
 			setScene(sampleScene);

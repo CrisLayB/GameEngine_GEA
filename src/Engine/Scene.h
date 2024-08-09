@@ -30,4 +30,6 @@ public:
 
   entt::registry& r;
   std::string name;
+
+  std::function<void()> onStop;
 };

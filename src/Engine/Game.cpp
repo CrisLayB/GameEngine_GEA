@@ -138,6 +138,10 @@ void Game::run()
   clean();
 }
 
+void Game::stop() {
+    isRunning = false;
+}
+
 void Game::setScene(Scene* newScene) {
   if (newScene != nullptr) {
     newScene->setup();

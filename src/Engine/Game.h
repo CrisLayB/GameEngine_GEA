@@ -16,6 +16,7 @@ class Game {
     bool running();
 
     void run();
+    void stop();
 
     void setScene(Scene* newScene);
     Scene* getCurrentScene() const;
