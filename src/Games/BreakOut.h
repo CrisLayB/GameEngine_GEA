@@ -13,15 +13,16 @@ struct SpriteComponent {
 	SDL_Color color;
 };
 
-struct PlayerTagComponent {};
-struct BallTagComponent {};
+struct PlayerComponent {};
+struct BallComponent {};
+struct BlockComponent {};
 
 class PlayerSpawnSetupSystem : public SetupSystem {
 	void run(){
 		Entity* player = scene -> createEntity("PLAYER", 250, 350);
-		player -> addComponent<VelocityComponent>(5, 5);
+		player -> addComponent<VelocityComponent>(10, 0);
 		player -> addComponent<SpriteComponent>(150, 25, SDL_Color{255, 0, 0});
-		player -> addComponent<PlayerTagComponent>();
+		player -> addComponent<PlayerComponent>();
 	}
 };
 
@@ -29,7 +30,7 @@ class PlayerInput : public EventSystem {
 	virtual void run(SDL_Event e){
 		const Uint8* ks = SDL_GetKeyboardState(NULL);
 
-		auto view = scene->r.view<PlayerTagComponent, VelocityComponent, PositionComponent>();
+		auto view = scene->r.view<PlayerComponent, VelocityComponent, PositionComponent>();
 
         auto player = view.front();
 		auto pos = view.get<PositionComponent>(player);
@@ -47,10 +48,10 @@ class PlayerInput : public EventSystem {
 
 class BallSpawnSetupSystem : public SetupSystem {
 	void run(){
-		Entity* ball = scene -> createEntity("BALL", 320, 150);
+		Entity* ball = scene -> createEntity("BALL", 320, 150);		
 		ball -> addComponent<VelocityComponent>(-75, 150);
 		ball -> addComponent<SpriteComponent>(30, 30, SDL_Color{255, 255, 255});
-		ball -> addComponent<BallTagComponent>();
+		ball -> addComponent<BallComponent>();
 	}
 };
 
@@ -80,6 +81,7 @@ class BlocksSpawnSetupSystem : public SetupSystem {
                 };
 				
 				block -> addComponent<SpriteComponent>(cubeWidth, cubeHeight, randomColor);
+				block -> addComponent<BlockComponent>();
 			}		
 		}
 	}
@@ -101,7 +103,7 @@ class MovementSystem : public UpdateSystem {
 
 class WallHitSystem : public UpdateSystem {
 	void run(float dT) {
-		auto view = scene->r.view<BallTagComponent, PositionComponent, VelocityComponent, SpriteComponent>();
+		auto view = scene->r.view<BallComponent, PositionComponent, VelocityComponent, SpriteComponent>();
 
 		auto ball = view.front();
 
@@ -136,6 +138,68 @@ class SquareRenderSystem : public RenderSystem {
 	}
 }; 
 
+class PlayerCollisionSystem : public UpdateSystem {
+    void run(float dT) override {
+        auto view = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>();
+
+        auto ballView = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>(entt::exclude<PlayerComponent>);
+        auto playerView = scene->r.view<PositionComponent, SpriteComponent, PlayerComponent>();		
+
+        for (auto ball : ballView) {
+            auto& ballPos = ballView.get<PositionComponent>(ball);
+            auto& ballVel = ballView.get<VelocityComponent>(ball);
+            auto& ballSpr = ballView.get<SpriteComponent>(ball);
+
+            for (auto player : playerView) {
+                auto& playerPos = playerView.get<PositionComponent>(player);
+                auto& playerSpr = playerView.get<SpriteComponent>(player);
+
+                bool collisionX = ballPos.x + ballSpr.width >= playerPos.x &&
+                                  playerPos.x + playerSpr.width >= ballPos.x;
+
+                bool collisionY = ballPos.y + ballSpr.height >= playerPos.y &&
+                                  playerPos.y + playerSpr.height >= ballPos.y;
+
+                if (collisionX && collisionY) {
+                    ballVel.y = -ballVel.y;
+					ballPos.y = ballPos.y < playerPos.y ? playerPos.y - ballSpr.height : playerPos.y + playerSpr.height;
+                }
+            }			
+        }		
+    }
+};
+
+class BlocksCollisionSystem : public UpdateSystem {
+	void run(float dT) override {
+		auto view = scene->r.view<PositionComponent, VelocityComponent, SpriteComponent>();
+
+		auto ballView = scene -> r.view<PositionComponent, VelocityComponent, SpriteComponent, BallComponent>(entt::exclude<PlayerComponent, BlockComponent>);
+		auto blocksView = scene -> r.view<PositionComponent, SpriteComponent, BlockComponent>();
+
+		for(auto ball : ballView){
+			auto& ballPos = ballView.get<PositionComponent>(ball);
+            auto& ballVel = ballView.get<VelocityComponent>(ball);
+            auto& ballSpr = ballView.get<SpriteComponent>(ball);
+
+			for(auto block : blocksView){
+				auto& blockPos = blocksView.get<PositionComponent>(block);
+				auto& blockSpr = blocksView.get<SpriteComponent>(block);
+
+				bool collisionX = ballPos.x + ballSpr.width >= blockPos.x &&
+                                  blockPos.x + ballSpr.width >= ballPos.x;
+
+                bool collisionY = ballPos.y + ballSpr.height >= blockPos.y &&
+                                  blockPos.y + ballSpr.height >= ballPos.y;
+
+				if(collisionX && collisionY){
+					ballVel.y = -ballVel.y;
+					ballPos.y = ballPos.y < blockPos.y ? blockPos.y - ballSpr.height : blockPos.y + blockSpr.height;
+				}
+			}
+		}
+	}
+};
+
 class BreakOut : public Game {
 	public:
 		Scene* sampleScene;
@@ -155,6 +219,8 @@ class BreakOut : public Game {
 			addSetupSystem<BlocksSpawnSetupSystem>(sampleScene);
 			addUpdateSystem<MovementSystem>(sampleScene);
 			addUpdateSystem<WallHitSystem>(sampleScene);
+			addUpdateSystem<PlayerCollisionSystem>(sampleScene);
+			addUpdateSystem<BlocksCollisionSystem>(sampleScene);
 			addRenderSystem<SquareRenderSystem>(sampleScene);
 
 			setScene(sampleScene);

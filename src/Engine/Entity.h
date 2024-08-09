@@ -22,7 +22,13 @@ public:
     scene->r.emplace<T>(handle, std::forward<decltype(args)>(args)...);
   }
 
+  template<typename T>
+  void removeComponent() {
+    scene->r.remove<T>(handle);
+  }
+
 private:
   entt::entity handle;
   Scene* scene;
+
 };
