@@ -3,6 +3,8 @@
 #include "Engine/Entity.h"
 #include "Engine/Components.h"
 #include "Engine/Systems.h"
+#include "Engine/Graphics/TextureManager.h"
+#include "Engine/Graphics/Texture.h"
 #include <print>
 #include <entt/entt.hpp>
 
@@ -17,7 +19,7 @@ class SquareSpawnSetupSystem : public SetupSystem {
     Entity* square = scene->createEntity("SQUARE", 10, 10); 
     square->addComponent<VelocityComponent>(500, 500);
     square->addComponent<SpriteComponent>(100, 100, SDL_Color{255, 0, 0});
- 
+
     Entity* square2 = scene->createEntity("SQUARE2", 924, 10); 
     square2->addComponent<VelocityComponent>(-400, -400);
     square2->addComponent<SpriteComponent>(100, 100, SDL_Color{0, 0, 255});
@@ -46,7 +48,7 @@ class WallHitSystem : public UpdateSystem {
       auto pos = view.get<PositionComponent>(e);
       auto spr = view.get<SpriteComponent>(e);
       auto& vel = view.get<VelocityComponent>(e);
-      
+
       int newPosX = pos.x + vel.x * dT;
       int newPosY = pos.y + vel.y * dT;
 
@@ -57,7 +59,7 @@ class WallHitSystem : public UpdateSystem {
       if (newPosY < 0 || newPosY + spr.height > 768) {
         vel.y *= -1.1;
       }
-      
+
     }
   }
 };
@@ -77,24 +79,68 @@ class SquareRenderSystem : public RenderSystem {
 }; 
 
 
-class DemoGame : public Game {
-  public:
-    Scene* sampleScene;
-    entt::registry r;
+struct TextureComponent {
+  std::string filename;
+};
 
-  public:
-    DemoGame()
-      : Game("SAMPLE", 1024, 768)
-    { }
+struct BackgroundComponent {
+  std::string filename;
+};
 
-    void setup() {
-      std::print("HELLO WORLD\n");  
-      sampleScene = new Scene("SAMPLE SCENE", r);
-      addSetupSystem<SquareSpawnSetupSystem>(sampleScene);
-      addUpdateSystem<MovementSystem>(sampleScene);
-      addUpdateSystem<WallHitSystem>(sampleScene);
-      addRenderSystem<SquareRenderSystem>(sampleScene);
+class BackgroundSetupSystem : public SetupSystem {
+public:
+  void run() override {
+    Entity* background = scene->createEntity("BACKGROUND");
+    const std::string& bgfile = "assets/Backgrounds/Sky.png";
+    background->addComponent<TextureComponent>(bgfile);
+    background->addComponent<BackgroundComponent>(bgfile);
+  }
+};
 
-      setScene(sampleScene);
+class TextureSetupSystem : public SetupSystem {
+  void run() {
+    auto view = scene->r.view<TextureComponent>();
+    for (auto e : view) {
+      auto tex = view.get<TextureComponent>(e);
+      TextureManager::LoadTexture(tex.filename, scene->renderer);
     }
+  }
+}; 
+
+class BackgroundRenderSystem : public RenderSystem {
+  void run(SDL_Renderer* renderer) {
+    auto view = scene->r.view<BackgroundComponent>();
+    for (auto e : view) {
+      auto tex = view.get<BackgroundComponent>(e);
+      auto texture = TextureManager::GetTexture(tex.filename);
+      texture->render(renderer, 0, 0);
+    }
+  }
+}; 
+
+
+class DemoGame : public Game {
+public:
+  Scene* sampleScene;
+  entt::registry r;
+
+public:
+  DemoGame()
+  : Game("SAMPLE", 1024, 768)
+  { }
+
+  void setup() {
+    std::print("HELLO WORLD\n");  
+    sampleScene = new Scene("SAMPLE SCENE", r, renderer);
+    addSetupSystem<SquareSpawnSetupSystem>(sampleScene);
+    addSetupSystem<BackgroundSetupSystem>(sampleScene);
+    addSetupSystem<TextureSetupSystem>(sampleScene);
+
+    addUpdateSystem<MovementSystem>(sampleScene);
+    addUpdateSystem<WallHitSystem>(sampleScene);
+    addRenderSystem<BackgroundRenderSystem>(sampleScene);
+    addRenderSystem<SquareRenderSystem>(sampleScene);
+
+    setScene(sampleScene);
+  }
 }; 

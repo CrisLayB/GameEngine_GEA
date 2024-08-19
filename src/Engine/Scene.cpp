@@ -5,8 +5,8 @@
 #include "Components.h"
 #include "Systems.h"
 
-Scene::Scene(const std::string& n, entt::registry& r)
-  : name(n), r(r)
+Scene::Scene(const std::string& n, entt::registry& r, SDL_Renderer* renderer)
+  : name(n), r(r), renderer(renderer)
 {
   std::print("Scene Initialized: {}\n", n);
 }

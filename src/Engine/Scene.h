@@ -17,7 +17,7 @@ public:
   std::vector<RenderSystem*> renderSystems;
   std::vector<UpdateSystem*> updateSystems;
 
-  Scene(const std::string&, entt::registry&);
+  Scene(const std::string&, entt::registry&, SDL_Renderer*);
   ~Scene();
 
   Entity* createEntity(const std::string&);
@@ -30,6 +30,6 @@ public:
 
   entt::registry& r;
   std::string name;
-
   std::function<void()> onStop;
+  SDL_Renderer* renderer;
 };

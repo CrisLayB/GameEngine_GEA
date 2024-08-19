@@ -22,15 +22,17 @@ add_executable(
 )
 
 find_package(SDL2 REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(SDL2_IMAGE REQUIRED SDL2_image)
 
 target_include_directories(game  
   PUBLIC src
   PUBLIC ${SDL2_INCLUDE_DIRS}
+  PUBLIC ${SDL2_IMAGE_INCLUDE_DIRS}
 )
 
 target_link_libraries(
   game
   ${SDL2_LIBRARIES}
+  ${SDL2_IMAGE_LIBRARIES}
 )
-
-target_link_libraries(game ${SDL2_LIBRARIES})

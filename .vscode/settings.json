@@ -71,6 +71,13 @@
 		"cinttypes": "cpp",
 		"typeinfo": "cpp",
 		"variant": "cpp",
-		"istream": "cpp"
+		"istream": "cpp",
+		"list": "cpp",
+		"map": "cpp",
+		"set": "cpp",
+		"unordered_set": "cpp",
+		"iostream": "cpp",
+		"ranges": "cpp",
+		"sstream": "cpp"
 	}
 }
