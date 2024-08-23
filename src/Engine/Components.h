@@ -13,4 +13,5 @@ struct PositionComponent {
 struct VelocityComponent {
   int x;
   int y;
+  int speed;
 };

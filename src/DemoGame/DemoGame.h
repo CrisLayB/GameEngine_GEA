@@ -8,21 +8,36 @@
 #include <print>
 #include <entt/entt.hpp>
 
+struct TextureComponent {
+  std::string filename;
+};
+
+struct BackgroundComponent {
+  std::string filename;
+};
+
+struct PlayerComponent {
+
+};
+
 struct SpriteComponent {
+  std::string filename;
   int width;
   int height;
-  SDL_Color color;
+  int scale = 1;
+  int animationFrames = 0;
+  int animationDuration = 0;
+  Uint32 lastUpdate = 0;  
+  int xIndex = 0;
 };
 
 class SquareSpawnSetupSystem : public SetupSystem {
   void run() {
     Entity* square = scene->createEntity("SQUARE", 10, 10); 
-    square->addComponent<VelocityComponent>(500, 500);
-    square->addComponent<SpriteComponent>(100, 100, SDL_Color{255, 0, 0});
-
-    Entity* square2 = scene->createEntity("SQUARE2", 924, 10); 
-    square2->addComponent<VelocityComponent>(-400, -400);
-    square2->addComponent<SpriteComponent>(100, 100, SDL_Color{0, 0, 255});
+    square->addComponent<PlayerComponent>();
+    square->addComponent<VelocityComponent>(300);
+    square->addComponent<TextureComponent>("assets/Sprites/cat.png");
+    square->addComponent<SpriteComponent>("assets/Sprites/cat.png", 8, 8, 10, 8, 1000);
   }
 };
 
@@ -36,6 +51,44 @@ class MovementSystem : public UpdateSystem {
 
       pos.x += vel.x * dT;
       pos.y += vel.y * dT;
+    }
+  }
+};
+
+class MovementInputSystem : public EventSystem {
+  void run(SDL_Event event){
+    auto view = scene->r.view<PlayerComponent, VelocityComponent>();
+
+    for (auto e : view) {
+      auto& vel = view.get<VelocityComponent>(e);      
+
+      if(event.type == SDL_KEYUP){
+        if(event.key.keysym.sym == SDLK_LEFT){
+          vel.x = vel.speed;
+        }
+        if(event.key.keysym.sym == SDLK_RIGHT){
+          vel.x = -vel.speed;
+        }
+        if(event.key.keysym.sym == SDLK_UP){
+          vel.y = -vel.speed;
+        }
+        if(event.key.keysym.sym == SDLK_DOWN){
+          vel.y = vel.speed;
+        }
+      } else if(event.type == SDL_KEYDOWN){
+        if(event.key.keysym.sym == SDLK_LEFT){
+          vel.x = 0;
+        }
+        if(event.key.keysym.sym == SDLK_RIGHT){
+          vel.x = 0;
+        }
+        if(event.key.keysym.sym == SDLK_UP){
+          vel.y = 0;
+        }
+        if(event.key.keysym.sym == SDLK_DOWN){
+          vel.y = 0;
+        }
+      }
     }
   }
 };
@@ -59,33 +112,53 @@ class WallHitSystem : public UpdateSystem {
       if (newPosY < 0 || newPosY + spr.height > 768) {
         vel.y *= -1.1;
       }
-
     }
   }
 };
 
-class SquareRenderSystem : public RenderSystem {
+class SpriteAnimationSystem : public UpdateSystem {
+  void run(float dT) override {
+    auto view = scene -> r.view<SpriteComponent>();
+    Uint32 now = SDL_GetTicks();
+    
+    for(auto e: view){
+      auto& spr = view.get<SpriteComponent>(e);
+
+      if(spr.animationFrames > 0){
+        if(spr.lastUpdate == 0){
+          spr.lastUpdate = now;
+          continue;
+        }
+
+        float timeSinceLastUpdate = now - spr.lastUpdate;
+
+        int lastFrame = spr.animationFrames - 1;
+
+        int framesUpdate = timeSinceLastUpdate / spr.animationDuration * spr.animationFrames;
+
+        if(framesUpdate > 0){
+          spr.xIndex += framesUpdate;
+          spr.xIndex %= spr.animationFrames;          
+          spr.lastUpdate = now;
+        }
+      }
+    }
+  }
+};
+
+class SpriteRenderSystem : public RenderSystem {
   void run(SDL_Renderer* renderer) {
     auto view = scene->r.view<PositionComponent, SpriteComponent>();
     for (auto e : view) {
       auto pos = view.get<PositionComponent>(e);
       auto spr = view.get<SpriteComponent>(e);
 
-      SDL_SetRenderDrawColor(renderer, spr.color.r, spr.color.g, spr.color.b, spr.color.a);
-      SDL_Rect r = { pos.x, pos.y, spr.width, spr.height };
-      SDL_RenderFillRect(renderer, &r);
+      Texture* texture = TextureManager::GetTexture(spr.filename);
+      SDL_Rect clip = { spr.xIndex * spr.width, 0, spr.width, spr.height};
+      texture -> render(scene->renderer, pos.x, pos.y, spr.width * spr.scale, spr.height * spr.scale, &clip);
     }
   }
 }; 
-
-
-struct TextureComponent {
-  std::string filename;
-};
-
-struct BackgroundComponent {
-  std::string filename;
-};
 
 class BackgroundSetupSystem : public SetupSystem {
 public:
@@ -133,13 +206,15 @@ public:
     std::print("HELLO WORLD\n");  
     sampleScene = new Scene("SAMPLE SCENE", r, renderer);
     addSetupSystem<SquareSpawnSetupSystem>(sampleScene);
-    addSetupSystem<BackgroundSetupSystem>(sampleScene);
+    //addSetupSystem<BackgroundSetupSystem>(sampleScene);
     addSetupSystem<TextureSetupSystem>(sampleScene);
+    addEventSystem<MovementInputSystem>(sampleScene);
 
     addUpdateSystem<MovementSystem>(sampleScene);
+    addUpdateSystem<SpriteAnimationSystem>(sampleScene);
     addUpdateSystem<WallHitSystem>(sampleScene);
-    addRenderSystem<BackgroundRenderSystem>(sampleScene);
-    addRenderSystem<SquareRenderSystem>(sampleScene);
+    //addRenderSystem<BackgroundRenderSystem>(sampleScene);
+    addRenderSystem<SpriteRenderSystem>(sampleScene);
 
     setScene(sampleScene);
   }
