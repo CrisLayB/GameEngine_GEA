@@ -5,7 +5,6 @@
 #include "Engine/Systems.h"
 #include "Engine/Graphics/TextureManager.h"
 #include "Engine/Graphics/Texture.h"
-#include <print>
 #include <entt/entt.hpp>
 
 struct TextureComponent {
@@ -164,7 +163,7 @@ class BackgroundSetupSystem : public SetupSystem {
 public:
   void run() override {
     Entity* background = scene->createEntity("BACKGROUND");
-    const std::string& bgfile = "assets/Backgrounds/Sky.png";
+    const std::string& bgfile = "assets/Backgrounds/ScenarioComplete.png";
     background->addComponent<TextureComponent>(bgfile);
     background->addComponent<BackgroundComponent>(bgfile);
   }
@@ -203,7 +202,7 @@ public:
   { }
 
   void setup() {
-    std::print("HELLO WORLD\n");  
+    printf("HELLO WORLD\n");  
     sampleScene = new Scene("SAMPLE SCENE", r, renderer);
     addSetupSystem<SquareSpawnSetupSystem>(sampleScene);
     //addSetupSystem<BackgroundSetupSystem>(sampleScene);

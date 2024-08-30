@@ -1,6 +1,5 @@
 #pragma once
 #include <entt/entt.hpp>
-#include <print>
 #include <utility>
 #include "Scene.h"
 #include "Components.h"
@@ -14,7 +13,7 @@ public:
 
   ~Entity() {
     scene->r.destroy(handle);
-    std::print("Enttiy Destroyed\n");
+    printf("Enttiy Destroyed\n");
   }
 
   template<typename T>

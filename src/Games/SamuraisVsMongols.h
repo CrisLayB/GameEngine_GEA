@@ -5,7 +5,6 @@
 #include "Engine/Systems.h"
 #include "Engine/Graphics/TextureManager.h"
 #include "Engine/Graphics/Texture.h"
-#include <print>
 #include <entt/entt.hpp>
 
 struct TextureComponent {
@@ -45,7 +44,7 @@ class BackgroundSetupSystem : public SetupSystem {
 public:
   void run() override {
     Entity* background = scene->createEntity("BACKGROUND");
-    const std::string& bgfile = "assets/Backgrounds/ScenarioComplete.png";
+    const std::string& bgfile = "assets/Backgrounds/background_level2.png";
     background->addComponent<TextureComponent>(bgfile);
     background->addComponent<BackgroundComponent>(bgfile);
   }
@@ -135,11 +134,11 @@ public:
 		sampleScene = new Scene("Samurais Vs Mongols - Level 1", r, renderer);
 
 		addSetupSystem<SamuraiSpawnSetupSystem>(sampleScene);
-		//addSetupSystem<BackgroundSetupSystem>(sampleScene);
+		addSetupSystem<BackgroundSetupSystem>(sampleScene);
 		addSetupSystem<TextureSetupSystem>(sampleScene);
 
 		addUpdateSystem<SpriteAnimationSystem>(sampleScene);
-		//addRenderSystem<BackgroundRenderSystem>(sampleScene);
+		addRenderSystem<BackgroundRenderSystem>(sampleScene);
 		addRenderSystem<SpriteRenderSystem>(sampleScene);
 
 		setScene(sampleScene);

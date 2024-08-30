@@ -5,8 +5,6 @@
 #include "Engine/Systems.h"
 #include "Engine/RandomSystem.h"
 #include <entt/entt.hpp>
-#include <print>
-
 struct SpriteComponent {
 	int width;
 	int height;
@@ -230,7 +228,7 @@ class VictoryConditionSystem : public UpdateSystem {
 				
 		if(playerStruct.score != playerStruct.maxScore) return;
 
-		std::print("VICTORY!\n");
+		printf("VICTORY!\n");
 		scene->onStop();
 	}
 };
@@ -248,7 +246,7 @@ class LoseConditionSystem : public UpdateSystem {
 		int newPosY = pos.y + vel.y * dT;
 
 		if(newPosY + spr.height > 480){
-			std::print("LOSE!\n");
+			printf("LOSE!\n");
 			scene->onStop();
 		}
 	}

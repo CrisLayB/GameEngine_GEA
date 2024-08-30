@@ -44,7 +44,7 @@ void Texture::render(SDL_Renderer* renderer, int x, int y, int w, int h, SDL_Rec
     rHeight = h;
   }
 
-  SDL_Rect renderQuad = SDL_Rect{ x, y, width, height };
+  SDL_Rect renderQuad = SDL_Rect{ x, y, rWidth, rHeight };
 
   //if (clip != nullptr) {
   //  srcrect.w = clip->w;
