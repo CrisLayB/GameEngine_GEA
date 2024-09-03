@@ -37,6 +37,10 @@ class SamuraiSpawnSetupSystem : public SetupSystem {
 		samurai->addComponent<VelocityComponent>(0);
 		samurai->addComponent<TextureComponent>("assets/Sprites/SamuraiComplete.png");
     samurai->addComponent<SpriteComponent>("assets/Sprites/SamuraiComplete.png", 160, 160, 1, 7, 1000);
+
+    Entity* shuriken = scene->createEntity("SHURIKEN", 500, 400);
+		shuriken->addComponent<TextureComponent>("assets/Sprites/shuriken.png");
+    shuriken->addComponent<SpriteComponent>("assets/Sprites/shuriken.png", 64, 64, 1, 6, 1000);
 	}
 };
 
