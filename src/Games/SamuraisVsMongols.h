@@ -32,11 +32,11 @@ struct SpriteComponent {
 
 class SamuraiSpawnSetupSystem : public SetupSystem {
 	void run(){
-		Entity* samurai = scene->createEntity("SAMURAI", 10, 10);
+		Entity* samurai = scene->createEntity("SAMURAI", 500, 400);
 		samurai->addComponent<PlayerComponent>();
 		samurai->addComponent<VelocityComponent>(0);
-		samurai->addComponent<TextureComponent>("assets/Sprites/cat.png");
-    	samurai->addComponent<SpriteComponent>("assets/Sprites/cat.png", 8, 8, 10, 1, 1000);
+		samurai->addComponent<TextureComponent>("assets/Sprites/SamuraiComplete.png");
+    samurai->addComponent<SpriteComponent>("assets/Sprites/SamuraiComplete.png", 160, 160, 1, 7, 1000);
 	}
 };
 
