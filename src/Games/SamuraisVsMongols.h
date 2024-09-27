@@ -1,4 +1,6 @@
+#pragma once
 #include "Engine/Game.h"
+#include "DemoGame/Tilemap.h"
 #include "Engine/Scene.h"
 #include "Engine/Entity.h"
 #include "Engine/Components.h"
@@ -6,10 +8,6 @@
 #include "Engine/Graphics/TextureManager.h"
 #include "Engine/Graphics/Texture.h"
 #include <entt/entt.hpp>
-
-struct TextureComponent {
-  std::string filename;
-};
 
 struct BackgroundComponent {
   std::string filename;
@@ -21,18 +19,6 @@ struct PlayerComponent {
 
 struct EnemyComponent {
   int speed = 100;
-};
-
-struct SpriteComponent {
-  std::string filename;
-  int width;
-  int height;
-  int scale = 1;
-  int animationFrames = 0;
-  int animationDuration = 0;
-  Uint32 lastUpdate = 0;  
-  int xIndex = 0;
-  int yIndex = 0;
 };
 
 class SamuraiSpawnSetupSystem : public SetupSystem {
@@ -123,15 +109,6 @@ public:
   }
 };
 
-class TextureSetupSystem : public SetupSystem {
-  void run() {
-    auto view = scene->r.view<TextureComponent>();
-    for (auto e : view) {
-      auto tex = view.get<TextureComponent>(e);
-      TextureManager::LoadTexture(tex.filename, scene->renderer);
-    }
-  }
-}; 
 
 class BackgroundRenderSystem : public RenderSystem {
   void run(SDL_Renderer* renderer) {
@@ -144,54 +121,7 @@ class BackgroundRenderSystem : public RenderSystem {
   }
 }; 
 
-class SpriteAnimationSystem : public UpdateSystem {
-  void run(float dT) override {
-    auto view = scene -> r.view<SpriteComponent>();
-    Uint32 now = SDL_GetTicks();
-    
-    for(auto e: view){
-      auto& spr = view.get<SpriteComponent>(e);
 
-      if(spr.animationFrames > 0){
-        if(spr.lastUpdate == 0){
-          spr.lastUpdate = now;
-          continue;
-        }
-
-        float timeSinceLastUpdate = now - spr.lastUpdate;
-
-        int lastFrame = spr.animationFrames - 1;
-
-        int framesUpdate = timeSinceLastUpdate / spr.animationDuration * spr.animationFrames;
-
-        if(framesUpdate > 0){
-          spr.xIndex += framesUpdate;
-          spr.xIndex %= spr.animationFrames;          
-          spr.lastUpdate = now;
-        }
-      }
-    }
-  }
-};
-
-class SpriteRenderSystem : public RenderSystem {
-  void run(SDL_Renderer* renderer) {
-    auto view = scene->r.view<PositionComponent, SpriteComponent>();
-    for (auto e : view) {
-      auto pos = view.get<PositionComponent>(e);
-      auto spr = view.get<SpriteComponent>(e);
-
-      Texture* texture = TextureManager::GetTexture(spr.filename);
-      SDL_Rect clip = {
-        spr.xIndex * spr.width,
-        spr.yIndex * spr.height,
-        spr.width,
-        spr.height,
-      };
-      texture->render(scene->renderer, pos.x, pos.y, spr.width * spr.scale, spr.height * spr.scale, &clip);
-    }
-  }
-}; 
 
 class SamuraisVsMongols : public Game {
 public:
@@ -206,12 +136,14 @@ public:
 	void setup(){
 		sampleScene = new Scene("Samurais Vs Mongols - Level 1", r, renderer);
 
+    addSetupSystem<TilemapSetupSystem>(sampleScene);
 		addSetupSystem<SamuraiSpawnSetupSystem>(sampleScene);
     addSetupSystem<MongolSpawnSetupSystem>(sampleScene);
 		addSetupSystem<BackgroundSetupSystem>(sampleScene);
 		addSetupSystem<TextureSetupSystem>(sampleScene);
     addEventSystem<SamuraiMovementInputSystem>(sampleScene);
 
+    addRenderSystem<TilemapRenderSystem>(sampleScene);
     addUpdateSystem<MovementSystem>(sampleScene);
 		addUpdateSystem<SpriteAnimationSystem>(sampleScene);
 		addRenderSystem<BackgroundRenderSystem>(sampleScene);

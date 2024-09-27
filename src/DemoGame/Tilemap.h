@@ -39,13 +39,13 @@ public:
       0, 0, 0, 0, 0, 1, 1, 1, 0, 0,
       0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 1, 0, 0, 0, 0,
-      0, 0, 0, 1, 0, 1, 0, 0, 1, 0,
-      0, 0, 0, 1, 1, 1, 0, 0, 1, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
+      0, 0, 0, 0, 0, 0, 0, 0, 1, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    std::string filename = "assets/Tilesets/large.png";
+    std::string filename = "assets/UITiles/SamuraiBar.png";
     int tileSize = 8;
     int tileScale = 8;
     std::vector<Tile> tiles;
@@ -190,3 +190,5 @@ class TilemapRenderSystem : public RenderSystem {
     }
   }
 }; 
+
+
