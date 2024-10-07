@@ -1,6 +1,6 @@
 //#include "Games/BreakOut.h"
 //#include "DemoGame/DemoGame.h"
-#include "Games/SamuraisVsMongols.h"
+#include "Games/Level2.h"
 
 int main() {
   //BreakOut demo = BreakOut();

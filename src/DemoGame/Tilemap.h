@@ -45,7 +45,7 @@ public:
       0, 0, 0, 0, 0, 0, 0, 0, 0, 0
     };
 
-    std::string filename = "assets/UITiles/SamuraiBar.png";
+    std::string filename = "assets/UITiles/DeathSkull.png";
     int tileSize = 8;
     int tileScale = 8;
     std::vector<Tile> tiles;
@@ -68,8 +68,8 @@ public:
       tiles,
       tileSize,
       tileScale,
-      10,
-      10
+      64,
+      64
     );
     tilemapEntity->addComponent<TextureComponent>(filename);
   }
