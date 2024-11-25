@@ -1,4 +1,7 @@
+#pragma once
+
 #include <SDL2/SDL.h>
+#include <fmod/fmod.hpp>
 #include "Scene.h"
 
 class Game {
@@ -22,6 +25,7 @@ class Game {
     Scene* getCurrentScene() const;
 
     entt::registry r;
+    FMOD::System* soundManager;
 
   protected:
     bool isRunning;
@@ -48,6 +52,7 @@ class Game {
     void addSetupSystem(Scene* scene, auto&&... args) {
         auto system = new T(std::forward<decltype(args)>(args)...);
         system->setScene(scene);
+        system->setGame(this);
         scene->setupSystems.push_back(system);
     }
 

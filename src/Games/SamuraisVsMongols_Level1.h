@@ -9,6 +9,7 @@
 #include "Engine/Graphics/Texture.h"
 #include "DemoGame/Collidres.h"
 #include "DemoGame/Player.h"
+#include "DemoGame/Sound.h"
 #include <entt/entt.hpp>
 
 struct BackgroundComponent { 
@@ -175,6 +176,7 @@ public:
 	void setup(){
 		sampleScene = new Scene("Samurais Vs Mongols - Level 1", r, renderer);
 
+    // ==> Setup Systems
     addSetupSystem<TilemapSetupSystem>(sampleScene);
 		addSetupSystem<SamuraiSpawnSetupSystem>(sampleScene);
     addSetupSystem<MongolSpawnSetupSystem>(sampleScene);
@@ -182,6 +184,13 @@ public:
 		addSetupSystem<TextureSetupSystem>(sampleScene);
     addEventSystem<SamuraiMovementInputSystem>(sampleScene);
 
+    // ==> Sound Systems
+    addSetupSystem<BackgroundMusicSetupSystem>(sampleScene);
+    addSetupSystem<FxMusicSetupSystem>(sampleScene);
+    addSetupSystem<SoundSetupSystem>(sampleScene);
+    addSetupSystem<BackgroundMusicPlaySetupSystem>(sampleScene);
+
+    // ==> Update Systems
     addUpdateSystem<ColliderResetSystem>(sampleScene);
     //addUpdateSystem<PlayerWallCollisionSystem>(sampleScene);
 
@@ -193,12 +202,12 @@ public:
     
     addUpdateSystem<PlayerAttackSystem>(sampleScene);
 
+    // ==> Render Systems
     addRenderSystem<TilemapRenderSystem>(sampleScene);
     addUpdateSystem<MovementSystem>(sampleScene);
 		addUpdateSystem<SpriteAnimationSystem>(sampleScene);
 		addRenderSystem<BackgroundRenderSystem>(sampleScene);
 		addRenderSystem<SpriteRenderSystem>(sampleScene);
-
     addRenderSystem<ColliderRenderSystem>(sampleScene);
 
 		setScene(sampleScene);
