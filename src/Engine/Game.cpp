@@ -1,6 +1,7 @@
 #include "Game.h"
 
 #include <sstream>
+#include <iostream>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_ttf.h>
 

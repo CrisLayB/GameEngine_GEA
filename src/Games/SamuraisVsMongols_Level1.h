@@ -53,6 +53,7 @@ class MovementSystem : public UpdateSystem {
 };
 
 class SamuraiMovementInputSystem : public EventSystem {
+public:
   void run(SDL_Event event){
     auto view = scene -> r.view<PlayerComponent, VelocityComponent, PositionComponent>();
     for(auto e : view){
@@ -79,6 +80,7 @@ class SamuraiMovementInputSystem : public EventSystem {
             std::cout << "Player attacks!" << std::endl;
             player.isAttack = true;
             player.lastAttackTime = currentTime;
+            attackSound();
           }
         }
       }
@@ -91,6 +93,44 @@ class SamuraiMovementInputSystem : public EventSystem {
           vel.y = 0;
         }
       }
+    }
+  }
+
+private:
+  void attackSound() {
+    if (!game) {
+        std::cerr << "Error: Game pointer is null." << std::endl;
+        return;
+    }
+
+    if (!game->soundManager) {
+        std::cerr << "Error: Sound manager is not initialized." << std::endl;
+        return;
+    }
+    
+    FMOD::System* soundManager = game->soundManager;
+    
+    auto soundView = scene->r.view<SoundComponent>();
+    for (auto soundEntity : soundView) {
+        auto& sound = soundView.get<SoundComponent>(soundEntity);
+
+        if (sound.type == SoundType::EFFECT && sound.identifier == NameSound::ATTACK) {
+            if (!sound.sound) {
+                std::cerr << "Error: Sound object is null for ATTACK!" << std::endl;
+                return;
+            }
+
+            if (sound.channel) {
+                sound.channel->stop(); // Stop the previous sound if playing
+            }
+
+            // Play the sound
+            FMOD_RESULT result = soundManager->playSound(sound.sound, nullptr, false, &sound.channel);
+            if (result != FMOD_OK) {
+                std::cerr << "Error playing sound: " << std::endl;
+            }
+            return;
+        }
     }
   }
 };
@@ -185,10 +225,8 @@ public:
     addEventSystem<SamuraiMovementInputSystem>(sampleScene);
 
     // ==> Sound Systems
-    addSetupSystem<BackgroundMusicSetupSystem>(sampleScene);
-    addSetupSystem<FxMusicSetupSystem>(sampleScene);
     addSetupSystem<SoundSetupSystem>(sampleScene);
-    addSetupSystem<BackgroundMusicPlaySetupSystem>(sampleScene);
+    addSetupSystem<BackgroundMusicSystem>(sampleScene);
 
     // ==> Update Systems
     addUpdateSystem<ColliderResetSystem>(sampleScene);
